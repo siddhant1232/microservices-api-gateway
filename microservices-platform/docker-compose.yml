@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: 
+      context: ./api-gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - user-service
+      - notification-service
+    environment:
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - USER_SERVICE_URL=http://user-service:3002
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3003
+
+  auth-service:
+    build:
+      context: ./auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - JWT_SECRET=supersecretjwtkey
+
+  user-service:
+    build:
+      context: ./user-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+
+  notification-service:
+    build:
+      context: ./notification-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
