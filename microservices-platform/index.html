@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microservices Platform Demo</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --input-bg: #334155;
+            --border: #475569;
+            --success: #4ade80;
+            --warning: #facc15;
+            --error: #f87171;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #a855f7, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            color: #cbd5e1;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .form-group h3 {
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: #e2e8f0;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text-main);
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button.danger {
+            background: var(--danger);
+        }
+
+        button.danger:hover {
+            background: var(--danger-hover);
+        }
+
+        .jwt-container {
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .jwt-container input {
+            color: var(--success);
+            font-family: monospace;
+            background: #0f172a;
+        }
+
+        .response-box {
+            background: #000;
+            color: #a3b8cc;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            font-family: 'Fira Code', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            border: 1px solid #333;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Microservices Platform Demo</h1>
+        <p>Interact with the Auth, User, and Notification services via the API Gateway</p>
+    </header>
+
+    <!-- Global JWT Tracker (Hidden logic block, visible representation in Auth) -->
+    <div style="display:none;" id="global-jwt"></div>
+
+    <!-- AUTH SERVICE SECTION -->
+    <section class="card" id="auth-section">
+        <h2>Auth Service</h2>
+        
+        <div class="form-group">
+            <h3>Register User</h3>
+            <div class="input-row">
+                <input type="text" id="reg-username" placeholder="Username (e.g. johndoe)">
+                <input type="email" id="reg-email" placeholder="Email (e.g. john@example.com)">
+                <input type="password" id="reg-password" placeholder="Password">
+            </div>
+            <button onclick="register()">Register via POST /api/auth/register</button>
+            <pre id="reg-response" class="response-box">Waiting for request...</pre>
+        </div>
+
+        <div class="form-group">
+            <h3>Login User</h3>
+            <div class="input-row">
+                <input type="email" id="login-email" placeholder="Email">
+                <input type="password" id="login-password" placeholder="Password">
+            </div>
+            <button onclick="login()">Login via POST /api/auth/login</button>
+            <div class="jwt-container">
+                <label>Active Token:</label>
+                <input type="text" id="active-token" readonly placeholder="JWT will appear here upon successful login" style="flex:2;">
+            </div>
+            <pre id="login-response" class="response-box">Waiting for request...</pre>
+        </div>
+    </section>
+
+    <!-- USER SERVICE SECTION -->
+    <section class="card" id="user-section">
+        <h2>User Service <small style="color:var(--text-muted);font-weight:normal;">(Protected by JWT Gateway Middleware)</small></h2>
+        
+        <div class="form-group">
+            <h3>Get User Profile</h3>
+            <div class="input-row">
+                <input type="text" id="get-profile-id" placeholder="User ID">
+            </div>
+            <button onclick="getProfile()">Get Profile via GET /users/:id/profile</button>
+            <pre id="get-profile-response" class="response-box">Waiting for request...</pre>
+        </div>
+
+        <div class="form-group">
+            <h3>Update User Profile</h3>
+            <div class="input-row">
+                <input type="text" id="upd-profile-id" placeholder="User ID">
+                <input type="text" id="upd-bio" placeholder="Bio">
+                <input type="text" id="upd-location" placeholder="Location">
+            </div>
+            <button onclick="updateProfile()">Update Profile via PUT /users/:id/profile</button>
+            <pre id="upd-profile-response" class="response-box">Waiting for request...</pre>
+        </div>
+    </section>
+
+    <!-- NOTIFICATION SERVICE SECTION -->
+    <section class="card" id="notify-section">
+        <h2>Notification Service <small style="color:var(--text-muted);font-weight:normal;">(Protected & Queued to BullMQ)</small></h2>
+        <div class="form-group">
+            <h3>Trigger Notification</h3>
+            <div class="input-row">
+                <input type="text" id="notif-user-id" placeholder="Target User ID">
+                <input type="text" id="notif-type" value="sms" placeholder="Type (e.g. email, sms, push)">
+            </div>
+            <div class="input-row">
+                <input type="text" id="notif-message" placeholder="Message content">
+            </div>
+            <button onclick="sendNotification()">Send Notification via POST /notify/send</button>
+            <pre id="notif-response" class="response-box">Waiting for request...</pre>
+        </div>
+    </section>
+
+    <!-- RATE LIMIT TEST SECTION -->
+    <section class="card" id="rate-section">
+        <h2>Rate Limit Test <small style="color:var(--text-muted);font-weight:normal;">(Redis-backed Gateway Limit)</small></h2>
+        <div class="form-group">
+            <p style="color: var(--text-muted);">
+                The API Gateway is configured with `express-rate-limit` using Redis. 
+                Clicking this button will dispatch 20 rapid GET requests to the root endpoint (`/`). 
+                If you exceed the allowed limit window (100 req / 15 mins), the gateway will block the requests.
+            </p>
+            <button class="danger" onclick="stressTest()">Stress Test API (Fire 20 Requests)</button>
+            <pre id="stress-response" class="response-box">Waiting for stress test...</pre>
+        </div>
+    </section>
+
+</div>
+
+<script>
+    // The Gateway runs on port 3000. All frontend requests go through the gateway.
+    const GATEWAY_URL = 'http://localhost:3000';
+    let currentJwt = '';
+
+    // Helper to extract JSON from inputs
+    const getVal = id => document.getElementById(id).value;
+    
+    // Helper to format responses visually
+    function renderResponse(elementId, status, data) {
+        const el = document.getElementById(elementId);
+        let badgeColor = '#4ade80'; // success green
+        
+        if (status >= 400 && status < 500) badgeColor = '#facc15'; // warning yellow
+        if (status === 429) badgeColor = '#f97316'; // orange for rate limit
+        if (status >= 500) badgeColor = '#ef4444'; // error red
+        
+        const html = `
+<span class="status-badge" style="background:${badgeColor}; color:#000;">HTTP ${status}</span>
+
+${JSON.stringify(data, null, 2)}
+        `.trim();
+        
+        el.innerHTML = html;
+    }
+
+    // Helper for adding auth headers to requests
+    function getHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': currentJwt ? `Bearer ${currentJwt}` : ''
+        };
+    }
+
+    /* ----------------------------------------------------------------------
+     * 1. Register User Form
+     * Sends POST request to the Auth Service proxy rule on the API Gateway.
+     * Original rule: /api/auth -> http://auth-service:4001
+     * ---------------------------------------------------------------------- */
+    async function register() {
+        const url = `${GATEWAY_URL}/api/auth/register`;
+        const body = {
+            username: getVal('reg-username'),
+            email: getVal('reg-email'),
+            password: getVal('reg-password')
+        };
+        
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            renderResponse('reg-response', res.status, data);
+            
+            // Auto-fill getting profile if successful to make testing easier
+            if(data.userId) {
+                document.getElementById('get-profile-id').value = data.userId;
+                document.getElementById('upd-profile-id').value = data.userId;
+                document.getElementById('notif-user-id').value = data.userId;
+            }
+        } catch (err) {
+            renderResponse('reg-response', 0, { error: err.message });
+        }
+    }
+
+    /* ----------------------------------------------------------------------
+     * 2. Login User Form
+     * Fetches a JWT if credentials match the in-memory array in Auth Service.
+     * ---------------------------------------------------------------------- */
+    async function login() {
+        const url = `${GATEWAY_URL}/api/auth/login`;
+        const body = {
+            email: getVal('login-email'),
+            password: getVal('login-password')
+        };
+        
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            renderResponse('login-response', res.status, data);
+            
+            if (data.token) {
+                currentJwt = data.token;
+                document.getElementById('active-token').value = currentJwt;
+            }
+        } catch (err) {
+            renderResponse('login-response', 0, { error: err.message });
+        }
+    }
+
+    /* ----------------------------------------------------------------------
+     * 3. Get User Profile Form
+     * Sends GET request to the User Service proxy target.
+     * Original rule: /users -> http://user-service:4002 (with pathRewrite)
+     * So Gateway route: /users/:id/profile maps to User route /:id/profile
+     * ---------------------------------------------------------------------- */
+    async function getProfile() {
+        const userId = getVal('get-profile-id') || 'placeholder';
+        const url = `${GATEWAY_URL}/users/${userId}/profile`;
+        
+        try {
+            const res = await fetch(url, {
+                method: 'GET',
+                headers: getHeaders()
+            });
+            const data = await res.json();
+            renderResponse('get-profile-response', res.status, data);
+        } catch (err) {
+            renderResponse('get-profile-response', 0, { error: err.message });
+        }
+    }
+
+    /* ----------------------------------------------------------------------
+     * 4. Update User Profile Form
+     * Sends PUT request to update profile on the User Service.
+     * ---------------------------------------------------------------------- */
+    async function updateProfile() {
+        const userId = getVal('upd-profile-id') || 'placeholder';
+        const url = `${GATEWAY_URL}/users/${userId}/profile`;
+        const body = {
+            bio: getVal('upd-bio'),
+            location: getVal('upd-location')
+        };
+        
+        try {
+            const res = await fetch(url, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            renderResponse('upd-profile-response', res.status, data);
+        } catch (err) {
+            renderResponse('upd-profile-response', 0, { error: err.message });
+        }
+    }
+
+    /* ----------------------------------------------------------------------
+     * 5. Trigger Notification Form
+     * Sends POST request to the Notification Service proxy target.
+     * Original rule: /notify -> http://notification-service:4003 (pathRewrite)
+     * Gateway route: /notify/send maps to Notification route /send
+     * ---------------------------------------------------------------------- */
+    async function sendNotification() {
+        const url = `${GATEWAY_URL}/notify/send`;
+        const body = {
+            userId: getVal('notif-user-id'),
+            type: getVal('notif-type'),
+            message: getVal('notif-message')
+        };
+        
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            renderResponse('notif-response', res.status, data);
+        } catch (err) {
+            renderResponse('notif-response', 0, { error: err.message });
+        }
+    }
+
+    /* ----------------------------------------------------------------------
+     * 6. Rate Limit Stress Test
+     * Fires off 20 parallel GET requests to the Gateway root directly to try
+     * and overwhelm the Redis-backed rate limiter (limit: 100/15m).
+     * ---------------------------------------------------------------------- */
+    async function stressTest() {
+        const url = `${GATEWAY_URL}/`;
+        const stressEl = document.getElementById('stress-response');
+        stressEl.innerHTML = '<span style="color:var(--text-muted)">Dispatching 20 requests...</span>';
+        
+        const promises = [];
+        for (let i = 0; i < 20; i++) {
+            promises.push(fetch(url, { headers: { 'Cache-Control': 'no-cache' }})
+                .then(r => ({ status: r.status, ok: r.ok }))
+                .catch(e => ({ status: 0, error: e.message }))
+            );
+        }
+        
+        const results = await Promise.all(promises);
+        
+        let output = `Executed 20 requests.\\n\\n`;
+        let rateLimitHit = false;
+        
+        results.forEach((r, idx) => {
+            if (r.status === 429) {
+                rateLimitHit = true;
+                output += `Req ${idx + 1}: HTTP 429 Too Many Requests 🔥\\n`;
+            } else {
+                output += `Req ${idx + 1}: HTTP ${r.status}\\n`;
+            }
+        });
+        
+        if (rateLimitHit) {
+            output = `\\n<span style="color:var(--warning)">RATE LIMIT TRIGGERED! Gateway returned 429s.</span>\\n\\n` + output;
+        } else {
+            output = `\\n<span style="color:var(--success)">All requests passed. Rate limit (100 reqs) not yet reached. </span>\\n\\n` + output;
+        }
+        
+        stressEl.innerHTML = output;
+    }
+</script>
+</body>
+</html>

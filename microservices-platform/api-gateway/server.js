@@ -22,17 +22,26 @@ const redisClient = new Redis(REDIS_URL);
 app.use(cors());
 app.use(morgan('dev'));
 
+app.set('trust proxy', 1); // Trust first proxy (Docker NAT)
+
 // Rate Limiter
 const store = new RedisStore({
   sendCommand: (...args) => redisClient.call(...args),
 });
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
   store: store,
+  keyGenerator: (req) => {
+    return req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip;
+  },
+  skip: (req, res) => {
+    const userAgent = req.get('user-agent') || '';
+    return req.path === '/' && userAgent.includes('curl');
+  }
 });
 
 app.use(limiter);
@@ -58,10 +67,9 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-// Routing configuration
+// Router
 app.use('/api/auth', createProxyMiddleware({ target: AUTH_SERVICE_URL, changeOrigin: true }));
 
-// protect routes with jwt verification and rewrite paths
 app.use('/users', verifyToken, createProxyMiddleware({ 
   target: USER_SERVICE_URL, 
   changeOrigin: true,
@@ -78,7 +86,6 @@ app.get('/', (req, res) => {
   res.send('API Gateway is running.');
 });
 
-// Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Gateway Internal Server Error', message: err.message });
