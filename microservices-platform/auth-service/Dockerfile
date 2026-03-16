@@ -4,10 +4,11 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
+RUN apk add --no-cache curl
 RUN npm install
 
 COPY . .
 
-EXPOSE 3001
+EXPOSE 4001
 
 CMD [ "node", "server.js" ]
