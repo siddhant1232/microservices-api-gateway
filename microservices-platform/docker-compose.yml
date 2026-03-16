@@ -15,6 +15,13 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:3001
       - USER_SERVICE_URL=http://user-service:3002
       - NOTIFICATION_SERVICE_URL=http://notification-service:3003
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=supersecretjwtkey
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
 
   auth-service:
     build:
@@ -38,5 +45,8 @@ services:
       context: ./notification-service
     ports:
       - "3003:3003"
+    depends_on:
+      - redis
     environment:
       - PORT=3003
+      - REDIS_URL=redis://redis:6379

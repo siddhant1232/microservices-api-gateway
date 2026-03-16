@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const notificationRoutes = require('./routes/notificationRoutes');
+const notificationWorker = require('./queue/notificationWorker');
 
 const app = express();
 const PORT = process.env.PORT || 3003;

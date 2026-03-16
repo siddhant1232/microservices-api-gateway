@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const axios = require('axios');
 
 // In-memory mock database for users since no DB was specified.
 const users = [];
@@ -31,6 +32,24 @@ exports.register = async (req, res) => {
 
     users.push(newUser);
 
+    const { Queue } = require('bullmq');
+    const REDIS_URL = process.env.REDIS_URL || 'redis://redis:6379';
+    const notificationQueue = new Queue('notifications', {
+      connection: { url: REDIS_URL }
+    });
+
+    // Send event to Notification Service asynchronously via BullMQ
+    try {
+      const job = await notificationQueue.add('send-notification', {
+        userId: newUser.id,
+        type: 'email',
+        message: `Welcome ${username}! You have successfully registered.`
+      });
+      console.log(`[AUTH SERVICE] Notification job ${job.id} enqueued for user ${newUser.id}`);
+    } catch (notifErr) {
+      console.error('[AUTH SERVICE] Failed to enqueue notification:', notifErr.message);
+    }
+    
     res.status(201).json({ message: 'User registered successfully', userId: newUser.id });
   } catch (error) {
     console.error('Registration error:', error);

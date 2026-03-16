@@ -10,8 +10,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bullmq": "^5.71.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "ioredis": "^5.10.0",
     "morgan": "^1.10.1"
   }
 }
